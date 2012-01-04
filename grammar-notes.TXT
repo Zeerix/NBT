@@ -1,0 +1,13 @@
+    http://web.archive.org/web/20110723210920/http://www.minecraft.net/docs/NBT.txt
+    
+    NBT::Root ::= <gzip> Byte='10' Tag_Compound </gzip>
+    NBT::Tag ::= TAG_Compound || TAG_List ||         (Map<String, X>, List<X>)
+                    TAG_String || TAG_Byte_Array ||    (String, byte[])
+                    TAG_Primitive                            (Byte, Short, ...)
+    TAG_Compound ::= TypeID TAG_String NBT::Tag TAG_Compound || Byte='0'
+    TAG_List ::= TypeID Tag_Int(length) NBT::Tag{length}
+    TypeID ::= Byte='1' || ... || Byte='10'
+    TAG_String ::= TAG_Short(length) UTF8{length}
+    TAG_Byte_Array ::= TAG_Short(length) Byte{length}
+    TAG_Primitive ::= TAG_Byte || TAG_Short || TAG_Int || TAG_Long ||
+                          TAG_Float || TAG_Double (all big endian)
