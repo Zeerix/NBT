@@ -16,21 +16,21 @@ public class NBTStreamWriter {
     /**
      * Reads a NBT tag compound from a GZIP compressed InputStream
      * @param inputstream
-     * @return Map<String, ?> describing the NBT tag compound
+     * @return Map<String, Object> describing the NBT tag compound
      * @throws IOException
      */
-    public static void write(OutputStream out, Map<String, ?> map) throws IOException {
+    public static void write(OutputStream out, Map<String, Object> map) throws IOException {
         write(out, map, true);
     }
 
     /**
      * Reads a NBT tag compound from an InputStream, either GZIP compressed or uncompressed
      * @param inputstream
-     * @param compressed If the data in InputStream is compressed
-     * @return Map<String, ?> describing the NBT tag compound
+     * @param compressed 'true' if the data in InputStream is compressed
+     * @return Map<String, Object> describing the NBT tag compound
      * @throws IOException
      */
-    public static void write(OutputStream out, Map<String, ?> map, boolean compressed) throws IOException {
+    public static void write(OutputStream out, Map<String, Object> map, boolean compressed) throws IOException {
         DataOutputStream data = compressed
             ? new DataOutputStream(new GZIPOutputStream(out))
             : new DataOutputStream(new BufferedOutputStream(out));
@@ -41,11 +41,12 @@ public class NBTStreamWriter {
         }
     }
 
-    private static void write(DataOutput out, Map<String, ?> map) throws IOException {
+    private static void write(DataOutput out, Map<String, Object> map) throws IOException {
         out.writeByte(10);  // TypeID of NBT::TAG_Compound
 
-        writeString(out, "");   // TODO: write root tag name
+        Object name = map.get("$this.name");
 
+        writeString(out, name != null ? (String)name : "");
         writeCompound(out, map);
     }
 
@@ -77,8 +78,8 @@ public class NBTStreamWriter {
 
         case 7: writeByteArray(out, (byte[])tag); break;
         case 8: writeString(out, (String)tag); break;
-        case 9: writeList(out, (List<?>)tag); break;
-        case 10: writeCompound(out, (Map<String, ?>)tag); break;
+        case 9: writeList(out, (List<Object>)tag); break;
+        case 10: writeCompound(out, (Map<String, Object>)tag); break;
         default: throw new IOException("Invalid NBT tag type (1-10): " + type);
         }
     }
@@ -92,7 +93,7 @@ public class NBTStreamWriter {
         out.writeUTF(str);
     }
 
-    private static void writeList(DataOutput out, List<?> list) throws IOException {
+    private static void writeList(DataOutput out, List<Object> list) throws IOException {
         byte type = list.isEmpty() ? 1 : whichType(list.get(0));
         out.writeByte(type);
         out.writeInt( list.size() );
@@ -101,8 +102,11 @@ public class NBTStreamWriter {
         }
     }
 
-    private static void writeCompound(DataOutput out, Map<String, ?> map) throws IOException {
-        for (Map.Entry<String, ?> entry : map.entrySet()) {
+    private static void writeCompound(DataOutput out, Map<String, Object> map) throws IOException {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (entry.getKey().equals("$this.name")) {
+                continue;   // skip internal name
+            }
             byte type = whichType(entry.getValue());
             out.writeByte(type);
             writeString(out, entry.getKey());

@@ -18,21 +18,21 @@ public class NBTStreamReader {
     /**
      * Reads a NBT tag compound from a GZIP compressed InputStream
      * @param inputstream
-     * @return Map<String, ?> describing the NBT tag compound
+     * @return Map<String, Object> describing the NBT tag compound
      * @throws IOException
      */
-    public static Map<String, ?> read(InputStream in) throws IOException {
+    public static Map<String, Object> read(InputStream in) throws IOException {
         return read(in, true);
     }
 
     /**
      * Reads a NBT tag compound from an InputStream, either GZIP compressed or uncompressed
      * @param inputstream
-     * @param compressed If the data in InputStream is compressed
-     * @return Map<String, ?> describing the NBT tag compound
+     * @param compressed 'true' if the data in InputStream is compressed
+     * @return Map<String, Object> describing the NBT tag compound
      * @throws IOException
      */
-    public static Map<String, ?> read(InputStream in, boolean compressed) throws IOException {
+    public static Map<String, Object> read(InputStream in, boolean compressed) throws IOException {
         DataInputStream data = compressed
             ? new DataInputStream(new GZIPInputStream(in))
             : new DataInputStream(new BufferedInputStream(in));
@@ -43,13 +43,18 @@ public class NBTStreamReader {
         }
     }
 
-    private static Map<String, ?> read(DataInput in) throws IOException {
+    private static Map<String, Object> read(DataInput in) throws IOException {
         if (in.readByte() != 10)    // assume TypeID of NBT::TAG_Compound
             throw new IOException("Root tag must be a named compound tag");
 
-        String name = readString(in);   // TODO: store root tag name
+        String name = readString(in);
 
-        return readCompound(in);
+        Map<String, Object> map = readCompound(in);
+        if (!name.isEmpty()) {
+            map.put("$this.name", name);
+        }
+
+        return map;
     }
 
     private static Object readTag(DataInput in, byte type) throws IOException {
@@ -79,7 +84,7 @@ public class NBTStreamReader {
         return in.readUTF();
     }
 
-    private static List<?> readList(DataInput in) throws IOException {
+    private static List<Object> readList(DataInput in) throws IOException {
         byte type = in.readByte();
         int length = in.readInt();
         List<Object> list = new ArrayList<Object>(length);
@@ -90,7 +95,7 @@ public class NBTStreamReader {
         return list;
     }
 
-    private static Map<String, ?> readCompound(DataInput in) throws IOException {
+    private static Map<String, Object> readCompound(DataInput in) throws IOException {
         Map<String, Object> map = new HashMap<String, Object>();
         for (byte type; (type = in.readByte()) != 0; ) {
             String name = readString(in);
