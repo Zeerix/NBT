@@ -62,6 +62,7 @@ public class NBTStreamWriter {
         if (tag instanceof String) return 8;
         if (tag instanceof List<?>) return 9;
         if (tag instanceof Map<?, ?>) return 10;
+        if (tag instanceof int[]) return 11;
 
         throw new RuntimeException("Cannot serialize unknown type " + tag.getClass());
     }
@@ -80,13 +81,20 @@ public class NBTStreamWriter {
         case 8: writeString(out, (String)tag); break;
         case 9: writeList(out, (List<Object>)tag); break;
         case 10: writeCompound(out, (Map<String, Object>)tag); break;
-        default: throw new IOException("Invalid NBT tag type (1-10): " + type);
+        case 11: writeIntArray(out, (int[]) tag); break;
+        default: throw new IOException("Invalid NBT tag type (1-11): " + type);
         }
     }
 
     private static void writeByteArray(DataOutput out, byte[] array) throws IOException {
         out.writeInt(array.length);
         out.write(array);
+    }
+
+    private static void writeIntArray(DataOutput out, int[] array) throws IOException {
+        out.writeInt(array.length);
+        for (int i = 0; i < array.length; i++)
+            out.writeInt(array[i]);
     }
 
     private static void writeString(DataOutput out, String str) throws IOException {
